@@ -11,7 +11,7 @@ use GuzzleHttp\Psr7\Request;
  */
 $totalRequestsToSend = !empty($argv[1]) && is_numeric($argv[1]) ? $argv[1] : 30000;
 $concurrency = 50;
-$rpcCallUrl = 'http://127.0.0.1:30390/createProduct';
+$rpcCallUrl = 'http://ec2-52-29-1-55.eu-central-1.compute.amazonaws.com:30390/createProduct';
 ////////////
 
 $client = new Client();
@@ -29,12 +29,14 @@ $failedRequestsPerSecond = [];
 
 $pool = new Pool($client, $requests($totalRequestsToSend), [
     'concurrency' => $concurrency,
-    'fulfilled' => function ($response, $index) use ($requestsPerSecond) {
+    'fulfilled' => function ($response, $index) {
+        global $requestsPerSecond;
         $now = (string) time();
         if (!isset($requestsPerSecond[$now])) $requestsPerSecond[$now] = 0;
         $requestsPerSecond[$now]++;
     },
-    'rejected' => function ($reason, $index) use ($requestsPerSecond) {
+    'rejected' => function ($reason, $index) {
+        global $failedRequestsPerSecond;
         $now = (string) time();
         if (!isset($failedRequestsPerSecond[$now])) $failedRequestsPerSecond[$now] = 0;
         $failedRequestsPerSecond[$now]++;

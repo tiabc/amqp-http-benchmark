@@ -5,44 +5,51 @@ if (!extension_loaded('amqp')) die('You must install php native amqp library, mo
  * Configuration
  */
 $totalRequestsToSend = !empty($argv[1]) && is_numeric($argv[1]) ? $argv[1] : 30000;
-$queueHost = 'localhost';
-$queueUsername = 'guest';
-$queuePassword = 'guest';
+$queueHost = 'ec2-52-29-1-55.eu-central-1.compute.amazonaws.com';
+$queueUsername = 'admin';
+$queuePassword = 'rock4me';
 $queueVhost = '/';
 $queuePort = 5672;
+$concurrency = 50;
 ////////////
 
 $payload = require_once("requestPayload.php");
 
-$cnn = new AMQPConnection();
-$cnn->setHost($queueHost);
-$cnn->setLogin($queueUsername);
-$cnn->setPassword($queuePassword);
-$cnn->setVhost($queueVhost);
-$cnn->setPort($queuePort);
-$cnn->connect();
+$queue = 'test-queue-direct-native-' . rand(0, 1000);
+$exchange = 'test-exchange-direct-native' . rand(0, 1000);
 
 // Create a channel
-$ch = new AMQPChannel($cnn);
+$exchanges = [];
 
-$queue = 'test-queue-direct-native';
-$exchange = 'test-exchange-direct-native';
+for($i=0; $i<$concurrency; $i++) {
+	$cnn = new AMQPConnection();
+	$cnn->setHost($queueHost);
+	$cnn->setLogin($queueUsername);
+	$cnn->setPassword($queuePassword);
+	$cnn->setVhost($queueVhost);
+	$cnn->setPort($queuePort);
+	$cnn->connect();
 
-$ex = new AMQPExchange($ch);
-$ex->setName($exchange);
-$ex->setType("direct");
-$ex->declareExchange();
+	$ch = new AMQPChannel($cnn);
 
-$q = new AMQPQueue($ch);
-$q->setName($queue);
-$q->declareQueue();
-$q->bind($exchange);
+	$ex = new AMQPExchange($ch);
+	$ex->setName($exchange);
+	$ex->setType("direct");
+	$ex->declareExchange();
+
+	$q = new AMQPQueue($ch);
+	$q->setName($queue);
+	$q->declareQueue();
+	$q->bind($exchange);
+
+	$exchanges[$i] = $ex;
+}
 
 $requestsPerSecond = [];
 
 $start = microtime(true);
 for ($i = 0; $i < $totalRequestsToSend; $i++) {
-	$ex->publish($payload, null, AMQP_NOPARAM, array('content_type' => 'application/json'));
+	$exchanges[rand(0, $concurrency - 1)]->publish($payload, null, AMQP_NOPARAM, array('content_type' => 'application/json'));
 
 	$now = (string) time();
     if (!isset($requestsPerSecond[$now])) $requestsPerSecond[$now] = 0;

@@ -9,9 +9,9 @@ use PhpAmqpLib\Message\AMQPMessage;
  * Configuration
  */
 $totalRequestsToSend = !empty($argv[1]) && is_numeric($argv[1]) ? $argv[1] : 30000;
-$queueHost = 'localhost';
-$queueUsername = 'guest';
-$queuePassword = 'guest';
+$queueHost = 'ec2-52-29-1-55.eu-central-1.compute.amazonaws.com';
+$queueUsername = 'admin';
+$queuePassword = 'rock4me';
 $queueVhost = '/';
 $queuePort = 5672;
 ////////////
