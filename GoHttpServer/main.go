@@ -60,10 +60,10 @@ func publishToQueue(body []byte) error {
 	}
 
 	if err := channel.Publish(
-		"test-queue", // publish to an exchange
-		"test-key",   // routing to 0 or more queues
-		false,        // mandatory
-		false,        // immediate
+		"test-queue", 
+		"test-key",   
+		false,        
+		false,        
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "application/json",
@@ -82,13 +82,7 @@ func publishToQueue(body []byte) error {
 func createProduct(w http.ResponseWriter, r *http.Request) {
 
 	uuid, _ := uuid.NewV4()
-
 	body, _ := ioutil.ReadAll(r.Body)
-
-	type createProductResponse struct {
-		UUID string
-		Timestamp string
-	}
 
 	response := CreateProductResponse{
 		UUID: uuid.String(),
