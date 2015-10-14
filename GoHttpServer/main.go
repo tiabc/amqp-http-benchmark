@@ -10,15 +10,17 @@ import (
 
 	"github.com/nu7hatch/gouuid"
 	"github.com/streadway/amqp"
+	"runtime"
 )
 
-var rmqConnection *amqp.Connection
+var amqpChannel *amqp.Channel
 
 type CreateProductResponse struct{
 	UUID, Timestamp string
 }
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	connectQueue()
 
 	http.HandleFunc("/createProduct", createProduct)
@@ -26,19 +28,17 @@ func main() {
 }
 
 func connectQueue() error {
-	var err error
-	rmqConnection, err = amqp.Dial("amqp://guest:guest@localhost:5672/")
-
+	rmqConnection, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
 	if err != nil {
 		return fmt.Errorf("Dial: %s", err)
 	}
 
-	channel, err := rmqConnection.Channel()
+	amqpChannel, err = rmqConnection.Channel()
 	if err != nil {
 		return fmt.Errorf("Channel: %s", err)
 	}
 
-	if err := channel.ExchangeDeclare(
+	if err := amqpChannel.ExchangeDeclare(
 		"test-queue", // name
 		"direct",     // type
 		true,         // durable
@@ -54,12 +54,8 @@ func connectQueue() error {
 }
 
 func publishToQueue(body []byte) error {
-	channel, err := rmqConnection.Channel()
-	if err != nil {
-		return fmt.Errorf("Channel: %s", err)
-	}
 
-	if err := channel.Publish(
+	if err := amqpChannel.Publish(
 		"test-queue", 
 		"test-key",   
 		false,        
