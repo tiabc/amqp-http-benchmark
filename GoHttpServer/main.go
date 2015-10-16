@@ -21,9 +21,11 @@ type CreateProductResponse struct{
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	if err := connectQueue(); err != nil {
-		fmt.Println("Error connecting to rmq: " + err)
+		fmt.Println("Error connecting to rmq: " + err.Error())
 		return
 	}
+
+	fmt.Println("Application started.")
 
 	http.HandleFunc("/createProduct", createProduct)
 	http.ListenAndServe(":30390", nil)
@@ -83,7 +85,7 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 
 	if err := publishToQueue(body); err != nil {
-		w.Write(err)
+		w.Write([]byte(err.Error()))
 	} else {
 		response := CreateProductResponse{
 			UUID: uuid.String(),
