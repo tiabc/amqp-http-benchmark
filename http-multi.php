@@ -51,6 +51,8 @@ $promise = $pool->promise();
 $promise->wait();
 $end = microtime(true);
 
+print_r($requestsPerSecond);
+
 echo str_repeat(PHP_EOL, 2);
 echo "Total time: " . ($end - $start) . " seconds" . PHP_EOL;
 echo "Average RPS: " . array_sum($requestsPerSecond) / count($requestsPerSecond) . " requests" . PHP_EOL;
