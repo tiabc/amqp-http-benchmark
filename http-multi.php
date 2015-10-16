@@ -10,7 +10,7 @@ use GuzzleHttp\Psr7\Request;
  * Configuration
  */
 $totalRequestsToSend = !empty($argv[1]) && is_numeric($argv[1]) ? $argv[1] : 30000;
-$concurrency = 24;
+$concurrency = 8;
 $rpcCallUrl = 'http://95.213.188.198:30390/createProduct';
 ////////////
 
