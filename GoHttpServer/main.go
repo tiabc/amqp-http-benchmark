@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"net/http"
 	"encoding/json"
 	"time"
@@ -21,7 +20,10 @@ type CreateProductResponse struct{
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	connectQueue()
+	if err := connectQueue(); err != nil {
+		fmt.Println("Error connecting to rmq: " + err)
+		return
+	}
 
 	http.HandleFunc("/createProduct", createProduct)
 	http.ListenAndServe(":30390", nil)
@@ -80,14 +82,15 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
 	uuid, _ := uuid.NewV4()
 	body, _ := ioutil.ReadAll(r.Body)
 
-	response := CreateProductResponse{
-		UUID: uuid.String(),
-		Timestamp: time.Now().Format(time.RFC850),
+	if err := publishToQueue(body); err != nil {
+		w.Write(err)
+	} else {
+		response := CreateProductResponse{
+			UUID: uuid.String(),
+			Timestamp: time.Now().Format(time.RFC850),
+		}
+
+		jsonResponse, _ := json.Marshal(response)
+		w.Write(jsonResponse)
 	}
-
-	publishToQueue(body)
-
-	jsonResponse, _ := json.Marshal(response)
-
-	io.WriteString(w, string(jsonResponse))
 }
