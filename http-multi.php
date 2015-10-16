@@ -11,7 +11,7 @@ use GuzzleHttp\Psr7\Request;
  */
 $totalRequestsToSend = !empty($argv[1]) && is_numeric($argv[1]) ? $argv[1] : 30000;
 $concurrency = 50;
-$rpcCallUrl = 'http://ec2-52-29-1-55.eu-central-1.compute.amazonaws.com:30390/createProduct';
+$rpcCallUrl = 'http://95.213.188.198:30390/createProduct';
 ////////////
 
 $client = new Client();
