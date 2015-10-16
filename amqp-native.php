@@ -10,47 +10,40 @@ $queueUsername = 'admin';
 $queuePassword = 'rock4me';
 $queueVhost = '/';
 $queuePort = 5672;
-$concurrency = 50;
 ////////////
 
 $payload = require_once("requestPayload.php");
 
-$queue = 'test-queue-direct-native-' . rand(0, 1000);
-$exchange = 'test-exchange-direct-native' . rand(0, 1000);
+$queueName = 'test-queue-direct-native-' . rand(0, 10000);
+$exchangeName = 'test-exchange-direct-native-' . rand(0, 10000);
 
-// Create a channel
-/** @var $exchanges AMQPExchange[] */
-$exchanges = [];
+// Create a connection and a channel.
+$cnn = new AMQPConnection();
+$cnn->setHost($queueHost);
+$cnn->setLogin($queueUsername);
+$cnn->setPassword($queuePassword);
+$cnn->setVhost($queueVhost);
+$cnn->setPort($queuePort);
+$cnn->connect();
 
-for($i=0; $i<$concurrency; $i++) {
-	$cnn = new AMQPConnection();
-	$cnn->setHost($queueHost);
-	$cnn->setLogin($queueUsername);
-	$cnn->setPassword($queuePassword);
-	$cnn->setVhost($queueVhost);
-	$cnn->setPort($queuePort);
-	$cnn->connect();
+$ch = new AMQPChannel($cnn);
 
-	$ch = new AMQPChannel($cnn);
+$exchange = new AMQPExchange($ch);
+$exchange->setName($exchangeName);
+$exchange->setType("direct");
+$exchange->declareExchange();
 
-	$ex = new AMQPExchange($ch);
-	$ex->setName($exchange);
-	$ex->setType("direct");
-	$ex->declareExchange();
+$q = new AMQPQueue($ch);
+$q->setName($queueName);
+$q->declareQueue();
+$q->bind($exchange);
 
-	$q = new AMQPQueue($ch);
-	$q->setName($queue);
-	$q->declareQueue();
-	$q->bind($exchange);
-
-	$exchanges[$i] = $ex;
-}
-
+// Benchmark requests.
 $requestsPerSecond = [];
 
 $start = microtime(true);
 for ($i = 0; $i < $totalRequestsToSend; $i++) {
-	$exchanges[rand(0, $concurrency - 1)]->publish($payload, null, AMQP_NOPARAM, array('content_type' => 'application/json'));
+	$exchange->publish($payload, null, AMQP_NOPARAM, array('content_type' => 'application/json'));
 
 	$now = (string) time();
     if (!isset($requestsPerSecond[$now])) $requestsPerSecond[$now] = 0;
