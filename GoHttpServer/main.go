@@ -42,6 +42,18 @@ func connectQueue() error {
 		return fmt.Errorf("Channel: %s", err)
 	}
 
+	_, err = amqpChannel.QueueDeclare(
+		"test-queue-go",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		return fmt.Errorf("Queue declare error: %s", err)
+	}
+
 	if err := amqpChannel.ExchangeDeclare(
 		"test-queue", // name
 		"direct",     // type
@@ -51,7 +63,11 @@ func connectQueue() error {
 		false,        // noWait
 		nil,          // arguments
 	); err != nil {
-		return fmt.Errorf("Exchange Declare: %s", err)
+		return fmt.Errorf("Exchange declare error: %s", err)
+	}
+
+	if err := amqpChannel.QueueBind("test-queue-go", "test-key", "test-queue", false, nil); err != nil {
+		return fmt.Errorf("QueueBind error: %s", err)
 	}
 
 	return nil
@@ -85,6 +101,7 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 
 	if err := publishToQueue(body); err != nil {
+		fmt.Println(err.Error())
 		w.Write([]byte(err.Error()))
 	} else {
 		response := CreateProductResponse{
