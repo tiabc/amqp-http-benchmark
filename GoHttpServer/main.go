@@ -2,21 +2,14 @@ package main
 
 import (
 	"net/http"
-	"encoding/json"
-	"time"
 	"io/ioutil"
 	"fmt"
 
-	"github.com/nu7hatch/gouuid"
 	"github.com/streadway/amqp"
 	"runtime"
 )
 
 var amqpChannel *amqp.Channel
-
-type CreateProductResponse struct{
-	UUID, Timestamp string
-}
 
 func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
@@ -78,8 +71,8 @@ func publishToQueue(body []byte) error {
 	if err := amqpChannel.Publish(
 		"test-queue", 
 		"test-key",   
-		false,        
-		false,        
+		false,
+		false,
 		amqp.Publishing{
 			Headers:         amqp.Table{},
 			ContentType:     "application/json",
@@ -96,20 +89,12 @@ func publishToQueue(body []byte) error {
 }
 
 func createProduct(w http.ResponseWriter, r *http.Request) {
-
-	uuid, _ := uuid.NewV4()
 	body, _ := ioutil.ReadAll(r.Body)
 
 	if err := publishToQueue(body); err != nil {
 		fmt.Println(err.Error())
 		w.Write([]byte(err.Error()))
 	} else {
-		response := CreateProductResponse{
-			UUID: uuid.String(),
-			Timestamp: time.Now().Format(time.RFC850),
-		}
-
-		jsonResponse, _ := json.Marshal(response)
-		w.Write(jsonResponse)
+		 // Ok, 200
 	}
 }
