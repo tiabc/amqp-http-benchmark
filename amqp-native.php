@@ -19,6 +19,7 @@ $queue = 'test-queue-direct-native-' . rand(0, 1000);
 $exchange = 'test-exchange-direct-native' . rand(0, 1000);
 
 // Create a channel
+/** @var $exchanges AMQPExchange[] */
 $exchanges = [];
 
 for($i=0; $i<$concurrency; $i++) {
