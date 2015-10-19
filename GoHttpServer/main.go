@@ -7,6 +7,8 @@ import (
 
 	"github.com/streadway/amqp"
 	"runtime"
+
+	_ "net/http/pprof"
 )
 
 var amqpChannel *amqp.Channel
