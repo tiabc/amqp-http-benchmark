@@ -97,6 +97,7 @@ func createProduct(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err.Error())
 		w.Write([]byte(err.Error()))
 	} else {
-		 // Ok, 200
+		// Ok, 200
+		fmt.Print(".")
 	}
 }
